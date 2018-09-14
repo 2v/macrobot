@@ -3,23 +3,27 @@ package frc.team61.robot.Macro;
 import frc.team61.robot.RobotMap;
 import frc.team61.robot.Subsystems.Drivetrain;
 
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+
+import static frc.team61.robot.RobotMap.autoFile;
 
 public class Recorder {
 
     //this object writes values into the file we specify
     private FileWriter writer;
 
+    public static File file;
     private long startTime;
 
     public Recorder() throws IOException {
         //record the time we started recording
         startTime = System.currentTimeMillis();
 
+        file = new File(autoFile);
         //put the filesystem location you are supposed to write to as a string
-        //as the argument in this method, as of 2015 it is /home/lvuser/recordedAuto.csv
-        writer = new FileWriter(RobotMap.autoFile);
+        writer = new FileWriter(file);
     }
 
 
@@ -46,14 +50,13 @@ public class Recorder {
             writer.append("," + drivetrain.sClawLifterA.get());
             writer.append("," + drivetrain.sClawLifterB.get());
             writer.append("," + drivetrain.sClawA.get());
-            writer.append("," + drivetrain.sClawB.get());
 
 
             /*
              * THE LAST ENTRY OF THINGS YOU RECORD NEEDS TO HAVE A DELIMITER CONCATENATED TO
              * THE STRING AT THE END. OTHERWISE GIVES NOSUCHELEMENTEXCEPTION
              */
-            writer.append("," + drivetrain.sClawLifterA.get() + "\n");
+            writer.append("," + drivetrain.sClawB.get() + "\n");
         }
     }
 
@@ -67,4 +70,3 @@ public class Recorder {
         }
     }
 }
-

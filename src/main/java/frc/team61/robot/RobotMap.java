@@ -4,7 +4,7 @@ public class RobotMap {
     private static final int autoVersionNo = 1;
 
     //autoFile is a global constant that keeps you from recording into a different file than the one you play from
-    public static final String autoFile = "/home/lvuser/recordedAuto" + autoVersionNo + ".csv";
+    public static final String autoFile = "/home/lvuser/recordedauto" + autoVersionNo + ".csv";
 
     //Joystick Ports
     public static int leftStick = 0;

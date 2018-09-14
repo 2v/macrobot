@@ -1,133 +1,162 @@
 package frc.team61.robot.Main;
 
+import edu.wpi.first.wpilibj.IterativeRobot;
 import frc.team61.robot.Macro.Player;
 import frc.team61.robot.Macro.Recorder;
 import frc.team61.robot.Subsystems.Drivetrain;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.concurrent.CountDownLatch;
-
-import static edu.wpi.first.wpilibj.RobotState.isOperatorControl;
 
 // the entry point of our application
-public class Main extends Drivetrain implements Runnable {
+public class Main extends IterativeRobot {
 
-    private final CountDownLatch countDownLatch  = new CountDownLatch(1);
+    public boolean toggleOnOpenClaw = false;
+    boolean togglePressedOpenClaw = false;
+    public boolean toggleOnBar = false;
+    boolean togglePressedBar = false;
+    public boolean toggleOnLiftClaw = false;
+    boolean togglePressedLiftClaw = false;
+    public boolean toggleOnLift = false;
+    boolean togglePressedLift = false;
 
-    private Drivetrain drivetrain = new Drivetrain();
+
+    private Drivetrain drivetrain;
 
     private boolean isRecording = false;
 
-    Recorder recorder = null;
+    private boolean clawOpen = false;
+    private boolean clawHigh = false;
 
-    public Main() {
-        // constructor
-    }
+    private Recorder recorder = null;
+    private Player player = null;
+
+    private Thread t;
 
     public void robotInit() {
-        // initialization when robot is first turned on
+        drivetrain = new Drivetrain();
     }
 
-    public void autonomous() {
-        //during autnomous, create new player object to read recorded file
-        Player player = null;
+    public void autonomousInit() { // this needs to be fixed
+        //during autonomous, create new player object to read recorded file
 
         //try to create a new player
         //if there is a file, great - you have a new non-null object "player"
         try {
             player = new Player();
+            System.out.println("Player created");
         } catch (FileNotFoundException e) {
             e.printStackTrace(System.out);
         }
 
-        //once autonomous is enabled
-        while (isAutonomous()) {
-            //as long as there is a file you found, then use the player to scan the .csv file
-            //and set the motor values to their specific motors
-            if (player != null) {
-                player.play(drivetrain);
+        t = new Thread(() -> {
+            while (!Thread.interrupted()) {
+                if (player != null) {
+                    System.out.println("Playing");
+                    player.play(drivetrain);
+                }
+                if (player.ended()) {
+                    System.out.println("Player ended");
+                    Thread.currentThread().interrupt();
+                    return;
+                }
             }
-            //do nothing if there is no file
-        }
+        });
+        t.start();
+        System.out.println("Started player thread");
+    }
 
-        //if there is a player and you've disabled autonomous, then flush the rest of the values
-        //and stop reading the file
-        if(player!= null) {
+    public void autonomousPeriodic() {
+
+    }
+
+    public void disabledInit() {
+        if (player != null) {
             player.end(drivetrain);
+            player = null;
         }
     }
 
-    private Thread controllerThread = new Thread() {
-        public void run() {
-            try {
-                countDownLatch.await();
-            } catch(InterruptedException e) {
-                e.printStackTrace(System.out);
-            }
 
-            while(isOperatorControl()) {
-                // TODO add all the methods of controlling the robot
-                // this is where all the commands to control the robot will be put
-                tankDrive(getLeftSpeed(), getRightSpeed());
-            }
+    public void teleopInit() {
+        try {
+            recorder = new Recorder();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-    };
 
-    private Thread recorderThread = new Thread(){
-        public void run(){
-            try {
-                countDownLatch.await();
-            } catch(InterruptedException e) {
-                e.printStackTrace();
-            }
-
-            try {
-                recorder = new Recorder();
-            }
-            catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            while(isOperatorControl()) {
-                if (getRecordButton()) {
-                    isRecording = !isRecording;
-                }
+        t = new Thread(() -> {
+            long startTime = System.currentTimeMillis();
+            while (!Thread.interrupted()) {
                 //if our record button has been pressed, lets start recording!
-                if (isRecording) {
-                    System.out.println("Recording Robot Macro");
-                    try {
-                        // if the recorder object has been created, start recording
-                        if(recorder != null) {
-                            recorder.record(drivetrain);
-                        }
+
+                System.out.println("Recording Robot Macro");
+                try {
+                    if (recorder == null) {
+                        recorder = new Recorder();
                     }
-                    catch (IOException e) {
+                    // if the recorder object has been created, start recording
+                    if (recorder != null) {
+                        recorder.record(drivetrain);
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                if ((System.currentTimeMillis() - startTime) > 30000) {
+                    try {
+                        if (recorder != null) {
+                            recorder.end();
+                            recorder = null;
+                        }
+                    } catch (IOException e) {
                         e.printStackTrace();
                     }
+                    Thread.currentThread().interrupt();
                 }
             }
-            try {
-                if(recorder != null) {
-                    recorder.end();
-                }
+        });
+        t.start();
+        System.out.println("Recorder thread");
+    }
+
+    public void teleopPeriodic() {
+//        if (drivetrain.getRecordButton()) {
+//            isRecording = !isRecording;
+//        }
+
+        drivetrain.tankDrive(drivetrain.getLeftSpeed(), drivetrain.getRightSpeed());
+        drivetrain.moveLiftMotorStack(drivetrain.getLiftSpeed());
+
+        if (drivetrain.clawStick.getTrigger()) {
+            if (!togglePressedOpenClaw) {
+                toggleOnOpenClaw = !toggleOnOpenClaw;
+                togglePressedOpenClaw = true;
             }
-            catch (IOException e) {
-                e.printStackTrace();
-            }
+        } else {
+            togglePressedOpenClaw = false;
         }
-    };
 
-    public static void main(String[] args) {
+        if (drivetrain.elevStick.getTrigger()) {
+            if (!togglePressedLiftClaw) {
+                toggleOnLiftClaw = !toggleOnLiftClaw;
+                togglePressedLiftClaw = true;
+            }
+        } else {
+            togglePressedLiftClaw = false;
+        }
 
+        if (toggleOnOpenClaw) {
+            drivetrain.liftClaw();
+        } else {
+            drivetrain.lowerClaw();
+        }
+
+        if (toggleOnLiftClaw) {
+            drivetrain.openClaw();
+        } else {
+            drivetrain.closeClaw();
+        }
     }
-
-    public void run() {
-        countDownLatch.countDown();
-        controllerThread.start();
-        recorderThread.start();
-        autonomous();
-
-    }
-
 }
+

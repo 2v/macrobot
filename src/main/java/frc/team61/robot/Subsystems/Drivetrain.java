@@ -8,9 +8,7 @@ import frc.team61.robot.RobotMap;
 
 import static com.ctre.phoenix.motorcontrol.ControlMode.PercentOutput;
 
-public class Drivetrain extends IterativeRobot {
-
-    Thread t1 = new Thread();
+public class Drivetrain {
 
     // speed controllers
     // drive motors
@@ -32,8 +30,8 @@ public class Drivetrain extends IterativeRobot {
     // joysticks
     private Joystick leftStick = new Joystick(RobotMap.leftStick);
     private Joystick rightStick = new Joystick(RobotMap.rightStick);
-    private Joystick elevStick = new Joystick(RobotMap.elevStick);
-    private Joystick clawStick = new Joystick(RobotMap.clawStick);
+    public Joystick elevStick = new Joystick(RobotMap.elevStick);
+    public Joystick clawStick = new Joystick(RobotMap.clawStick);
 
     public Drivetrain() {
         firstLeftMotor = new TalonSRX(RobotMap.mLeftA);
@@ -48,6 +46,38 @@ public class Drivetrain extends IterativeRobot {
         sClawLifterB = new Solenoid(RobotMap.pcmModule, RobotMap.sClawLifterChannelB);
         sClawA = new Solenoid(RobotMap.pcmModule, RobotMap.sClawChannelA);
         sClawB = new Solenoid(RobotMap.pcmModule, RobotMap.sClawChannelB);
+    }
+
+    public void openClaw() {
+        sClawA.set(false);
+        sClawB.set(true);
+    }
+
+    /**
+     * Closes the claw using solenoids
+     * @author Team 61 Programming
+     */
+    public void closeClaw() {
+        sClawA.set(true);
+        sClawB.set(false);
+    }
+
+    /**
+     * Lifts the claw using solenoids
+     * @author Team 61 Programming
+     */
+    public void liftClaw() {
+        sClawLifterA.set(false);
+        sClawLifterB.set(true);
+    }
+
+    /**
+     * Lowers the claw using solenoids
+     * @author Team 61 Programming
+     */
+    public void lowerClaw() {
+        sClawLifterA.set(true);
+        sClawLifterB.set(false);
     }
 
     public boolean getRecordButton() {
@@ -75,7 +105,7 @@ public class Drivetrain extends IterativeRobot {
      * @return joystick value scaled -1 to 1
      */
     public double getRightSpeed() {
-        return (leftStick.getY());
+        return (rightStick.getY());
     }
 
     /**
@@ -127,8 +157,7 @@ public class Drivetrain extends IterativeRobot {
      * @author Team 61 Programming
      * @param speed
      */
-    private void moveLeftMotorStack(double speed)
-    {
+    private void moveLeftMotorStack(double speed) {
 //      speed = speed*-1.0;
         firstLeftMotor.set(PercentOutput, speed);
         secondLeftMotor.set(PercentOutput, speed);
@@ -139,11 +168,15 @@ public class Drivetrain extends IterativeRobot {
      * @author Team 61 Programming
      * @param speed
      */
-    private void moveRightMotorStack(double speed)
-    {
+    private void moveRightMotorStack(double speed) {
         // negative to go in forward direction
         firstRightMotor.set(PercentOutput, -speed);
         secondRightMotor.set(PercentOutput, -speed);
+    }
+
+    public void moveLiftMotorStack(double speed) {
+        firstLiftMotor.set(PercentOutput, speed);
+        secondLiftMotor.set(PercentOutput, speed);
     }
 
     /**
@@ -153,9 +186,6 @@ public class Drivetrain extends IterativeRobot {
     public void stop() {
         moveLeftMotorStack(0.0);
         moveRightMotorStack(0.0);
-    }
-
-    public static void main(String[] args) {
     }
 
 }

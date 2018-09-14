@@ -8,6 +8,7 @@ import java.io.FileNotFoundException;
 import java.util.Scanner;
 
 import static com.ctre.phoenix.motorcontrol.ControlMode.Current;
+import static com.ctre.phoenix.motorcontrol.ControlMode.PercentOutput;
 
 public class Player {
     private Scanner scanner;
@@ -15,11 +16,12 @@ public class Player {
 
     private boolean onTime = true;
     private double nextDouble;
+    private boolean ended = false;
 
 
     public Player() throws FileNotFoundException {
         // create a scanner to read the file created in the Record class
-        scanner = new Scanner(new File(RobotMap.autoFile));
+        scanner = new Scanner(Recorder.file);
 
         // let scanner know that the numbers are separated by a comma or a newline, as it is a .csv file
         scanner.useDelimiter(",|\\n");
@@ -52,14 +54,14 @@ public class Player {
                 //otherwise, motor values will be sent to the wrong motors and the robot will be unpredicatable
 
                 // drive motors
-                drivetrain.firstLeftMotor.set(Current, scanner.nextDouble());
-                drivetrain.secondLeftMotor.set(Current, scanner.nextDouble());
-                drivetrain.firstRightMotor.set(Current, scanner.nextDouble());
-                drivetrain.secondRightMotor.set(Current, scanner.nextDouble());
+                drivetrain.firstLeftMotor.set(PercentOutput, scanner.nextDouble());
+                drivetrain.secondLeftMotor.set(PercentOutput, scanner.nextDouble());
+                drivetrain.firstRightMotor.set(PercentOutput, scanner.nextDouble());
+                drivetrain.secondRightMotor.set(PercentOutput, scanner.nextDouble());
 
                 // lift motors
-                drivetrain.firstLiftMotor.set(Current, scanner.nextDouble());
-                drivetrain.secondLiftMotor.set(Current, scanner.nextDouble());
+                drivetrain.firstLiftMotor.set(PercentOutput, scanner.nextDouble());
+                drivetrain.secondLiftMotor.set(PercentOutput, scanner.nextDouble());
 
                 // claw solenoids
                 drivetrain.sClawLifterA.set(scanner.nextBoolean());
@@ -104,5 +106,11 @@ public class Player {
         if (scanner != null) {
             scanner.close();
         }
+        ended = true;
+
+    }
+
+    public boolean ended() {
+        return ended;
     }
 }
